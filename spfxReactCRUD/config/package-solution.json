@@ -3,8 +3,35 @@
   "solution": {
     "name": "spfx-react-crud-client-side-solution",
     "id": "dc4ac0ca-3679-4d25-8c09-9bb0e5f8830c",
-    "version": "1.0.0.0",
-    "includeClientSideAssets": true
+    "version": "2.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "developer": {
+      "name": "Daniel Radd",
+      "websiteUrl": "",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": "Undefined-1.24.2"
+    },
+    "metadata": {
+      "shortDescription": {
+        "default": "CRUD de itens de lista do SharePoint com React"
+      },
+      "longDescription": {
+        "default": "Web part de exemplo que cria, lê, atualiza e exclui itens de uma lista do SharePoint usando SPHttpClient."
+      },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "spfx-react-crud Feature",
+        "description": "The feature that activates elements of the spfx-react-crud solution.",
+        "id": "6a7865e4-8444-438d-9095-37349d699cb0",
+        "version": "2.0.0.0"
+      }
+    ]
   },
   "paths": {
     "zippedPackage": "solution/spfx-react-crud.sppkg"
