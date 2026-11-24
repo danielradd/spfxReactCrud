@@ -1,342 +1,213 @@
 import * as React from 'react';
+import {
+  DefaultButton,
+  DetailsList,
+  DetailsListLayoutMode,
+  Dialog,
+  DialogFooter,
+  DialogType,
+  type IColumn,
+  MessageBar,
+  MessageBarType,
+  type PartialTheme,
+  PrimaryButton,
+  Selection,
+  SelectionMode,
+  Spinner,
+  SpinnerSize,
+  Stack,
+  Text,
+  TextField,
+  ThemeProvider
+} from '@fluentui/react';
+import * as strings from 'SpfxReactCrudWebPartStrings';
+
 import styles from './SpfxReactCrud.module.scss';
-import { ISpfxReactCrudProps } from './ISpfxReactCrudProps';
-import { escape } from '@microsoft/sp-lodash-subset';
-import { ISpfxReactCrudState } from './ISpfxReactCrudState';
-import { IListItem } from './IListItem';
-import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http';
+import type { ISpfxReactCrudProps } from './ISpfxReactCrudProps';
+import type { IListItem } from '../models/IListItem';
+import { ListService, ListServiceError } from '../services/ListService';
 
-export default class SpfxReactCrud extends React.Component<ISpfxReactCrudProps, ISpfxReactCrudState> {
-  private listItemEntityTypeName: string | undefined = undefined;
-  constructor(props: ISpfxReactCrudProps) {
-    super(props);
-
-    this.state = {
-      status: 'Ready',
-      items: []
-    };
-  }
-
-  public render(): React.ReactElement<ISpfxReactCrudProps> {
-    const items: JSX.Element[] = this.state.items.map((item: IListItem, i: number): JSX.Element => {
-      return (
-        <li key={item.Id}>{item.Title} ({item.Id}) </li>
-      );
-    });
-
-    return (
-      <div className={styles.spfxReactCrud}>
-        <div className={styles.container}>
-          <div className={styles.row}>
-            <div className={styles.column}>
-              <span className={styles.title}>Welcome to SharePoint!</span>
-              <p className={styles.subTitle}>Customize SharePoint experiences using Web Parts.</p>
-              <p className={styles.description}>{escape(this.props.listName)}</p>
-
-              <div className={`ms-Grid-row ms-bgColor-themeDark ms-fontColor-white ${styles.row}`}>
-                <div className='ms-Grid-col ms-u-lg10 ms-u-xl8 ms-u-xlPush2 ms-u-lgPush1'>
-                  <a href="#" className={`${styles.button}`} onClick={() => this.createItem()}>
-                    <span className={styles.label}>Create item</span>
-                  </a>&nbsp;
-                  <a href="#" className={`${styles.button}`} onClick={() => this.readItem()}>
-                    <span className={styles.label}>Read item</span>
-                  </a>
-                </div>
-              </div>
-
-              <div className={`ms-Grid-row ms-bgColor-themeDark ms-fontColor-white ${styles.row}`}>
-                <div className='ms-Grid-col ms-u-lg10 ms-u-xl8 ms-u-xlPush2 ms-u-lgPush1'>
-                  <a href="#" className={`${styles.button}`} onClick={() => this.updateItem()}>
-                    <span className={styles.label}>Update item</span>
-                  </a>&nbsp;
-                  <a href="#" className={`${styles.button}`} onClick={() => this.deleteItem()}>
-                    <span className={styles.label}>Delete item</span>
-                  </a>
-                </div>
-              </div>
-
-              <div className={`ms-Grid-row ms-bgColor-themeDark ms-fontColor-white ${styles.row}`}>
-                <div className='ms-Grid-col ms-u-lg10 ms-u-xl8 ms-u-xlPush2 ms-u-lgPush1'>
-                  {this.state.status}
-                  <ul>
-                    {items}
-                  </ul>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  private createItem(): void {
-    this.setState({
-      status: 'Creating item...',
-      items: []
-    });
-
-    const body: string = JSON.stringify({
-      'Title': `Item ${new Date()}`
-    });
-
-    this.props.spHttpClient.post(`${this.props.siteUrl}/_api/web/lists/getbytitle('${this.props.listName}')/items`,
-      SPHttpClient.configurations.v1,
-      {
-        headers: {
-          'Accept': 'application/json;odata=nometadata',
-          'Content-type': 'application/json;odata=nometadata',
-          'odata-version': ''
-        },
-        body: body
-      })
-      .then((response: SPHttpClientResponse): Promise<IListItem> => {
-        return response.json();
-      })
-      .then((item: IListItem): void => {
-        this.setState({
-          status: `Item '${item.Title}' (ID: ${item.Id}) successfully created`,
-          items: []
-        });
-      }, (error: any): void => {
-        this.setState({
-          status: 'Error while creating the item: ' + error,
-          items: []
-        });
-      });
-  }
-
-  private readItem(): void {
-    this.setState({
-      status: 'Loading latest items...',
-      items: []
-    });
-    this.getLatestItemId()
-      .then((itemId: number): Promise<SPHttpClientResponse> => {
-        if (itemId === -1) {
-          throw new Error('No items found in the list');
-        }
-
-        this.setState({
-          status: `Loading information about item ID: ${itemId}...`,
-          items: []
-        });
-        return this.props.spHttpClient.get(`${this.props.siteUrl}/_api/web/lists/getbytitle('${this.props.listName}')/items(${itemId})?$select=Title,Id`,
-          SPHttpClient.configurations.v1,
-          {
-            headers: {
-              'Accept': 'application/json;odata=nometadata',
-              'odata-version': ''
-            }
-          });
-      })
-      .then((response: SPHttpClientResponse): Promise<IListItem> => {
-        return response.json();
-      })
-      .then((item: IListItem): void => {
-        this.setState({
-          status: `Item ID: ${item.Id}, Title: ${item.Title}`,
-          items: []
-        });
-      }, (error: any): void => {
-        this.setState({
-          status: 'Loading latest item failed with error: ' + error,
-          items: []
-        });
-      });
-  }
-
-  private getLatestItemId(): Promise<number> {
-    return new Promise<number>((resolve: (itemId: number) => void, reject: (error: any) => void): void => {
-      this.props.spHttpClient.get(`${this.props.siteUrl}/_api/web/lists/getbytitle('${this.props.listName}')/items?$orderby=Id desc&amp;$top=1&amp;$select=id`,
-        SPHttpClient.configurations.v1,
-        {
-          headers: {
-            'Accept': 'application/json;odata=nometadata',
-            'odata-version': ''
-          }
-        })
-        .then((response: SPHttpClientResponse): Promise<{ value: { Id: number }[] }> => {
-          return response.json();
-        })
-        .then((response: { value: { Id: number }[] }): void => {
-          if (response.value.length === 0) {
-            resolve(-1);
-          }
-          else {
-            resolve(response.value[0].Id);
-          }
-        })
-        .catch((error: any): void => {
-          reject(error);
-        });
-    });
-  }
-
-  private updateItem(): void {
-    this.setState({
-      status: 'Loading latest items...',
-      items: []
-    });
-    let latestItemId: number | undefined = undefined;
-    let etag: string = '*';
-    let listItemEntityTypeName: string = '';
-    this.getListItemEntityTypeName()
-      .then((listItemType: string): Promise<number> => {
-        listItemEntityTypeName = listItemType;
-        return this.getLatestItemId();
-      })
-      .then((itemId: number): Promise<SPHttpClientResponse> => {
-        if (itemId === -1) {
-          throw new Error('No items found in the list');
-        }
-
-        latestItemId = itemId;
-        this.setState({
-          status: `Loading information about item ID: ${latestItemId}...`,
-          items: []
-        });
-        return this.props.spHttpClient.get(`${this.props.siteUrl}/_api/web/lists/getbytitle('${this.props.listName}')/items(${latestItemId})?$select=Id`,
-          SPHttpClient.configurations.v1,
-          {
-            headers: {
-              'Accept': 'application/json;odata=nometadata',
-              'odata-version': ''
-            }
-          });
-      })
-      .then((response: SPHttpClientResponse): Promise<IListItem> => {
-        etag = response.headers.get('ETag') || '*';
-        return response.json();
-      })
-      .then((item: IListItem): Promise<SPHttpClientResponse> => {
-        this.setState({
-          status: `Updating item with ID: ${latestItemId}...`,
-          items: []
-        });
-        const body: string = JSON.stringify({
-          '__metadata': {
-            'type': listItemEntityTypeName
-          },
-          'Title': `Item ${new Date()}`
-        });
-        return this.props.spHttpClient.post(`${this.props.siteUrl}/_api/web/lists/getbytitle('${this.props.listName}')/items(${item.Id})`,
-          SPHttpClient.configurations.v1,
-          {
-            headers: {
-              'Accept': 'application/json;odata=nometadata',
-              'Content-type': 'application/json;odata=verbose',
-              'odata-version': '',
-              'IF-MATCH': etag,
-              'X-HTTP-Method': 'MERGE'
-            },
-            body: body
-          });
-      })
-      .then((response: SPHttpClientResponse): void => {
-        this.setState({
-          status: `Item with ID: ${latestItemId} successfully updated`,
-          items: []
-        });
-      }, (error: any): void => {
-        this.setState({
-          status: `Error updating item: ${error}`,
-          items: []
-        });
-      });
-  }
-
-  private getListItemEntityTypeName(): Promise<string> {
-    return new Promise<string>((resolve: (listItemEntityTypeName: string) => void, reject: (error: any) => void): void => {
-      if (this.listItemEntityTypeName) {
-        resolve(this.listItemEntityTypeName);
-        return;
-      }
-
-      this.props.spHttpClient.get(`${this.props.siteUrl}/_api/web/lists/getbytitle('${this.props.listName}')?$select=ListItemEntityTypeFullName`,
-        SPHttpClient.configurations.v1,
-        {
-          headers: {
-            'Accept': 'application/json;odata=nometadata',
-            'odata-version': ''
-          }
-        })
-        .then((response: SPHttpClientResponse): Promise<{ ListItemEntityTypeFullName: string }> => {
-          return response.json();
-        })
-        .then((response: { ListItemEntityTypeFullName: string }): void => {
-          this.listItemEntityTypeName = response.ListItemEntityTypeFullName;
-          resolve(this.listItemEntityTypeName);
-        })
-        .catch((error: any): void => {
-          reject(error);
-        });
-    });
-  }
-
-    private deleteItem(): void {
-    if (!window.confirm('Are you sure you want to delete the latest item?')) {
-      return;
-    }
-
-    this.setState({
-      status: 'Loading latest items...',
-      items: []
-    });
-    let latestItemId: number | undefined = undefined;
-    let etag: string = '*';
-    this.getLatestItemId()
-      .then((itemId: number): Promise<SPHttpClientResponse> => {
-        if (itemId === -1) {
-          throw new Error('No items found in the list');
-        }
-
-        latestItemId = itemId;
-        this.setState({
-          status: `Loading information about item ID: ${latestItemId}...`,
-          items: []
-        });
-        return this.props.spHttpClient.get(`${this.props.siteUrl}/_api/web/lists/getbytitle('${this.props.listName}')/items(${latestItemId})?$select=Id`,
-          SPHttpClient.configurations.v1,
-          {
-            headers: {
-              'Accept': 'application/json;odata=nometadata',
-              'odata-version': ''
-            }
-          });
-      })
-      .then((response: SPHttpClientResponse): Promise<IListItem> => {
-        etag = response.headers.get('ETag') || '*';
-        return response.json();
-      })
-      .then((item: IListItem): Promise<SPHttpClientResponse> => {
-        this.setState({
-          status: `Deleting item with ID: ${latestItemId}...`,
-          items: []
-        });
-        return this.props.spHttpClient.post(`${this.props.siteUrl}/_api/web/lists/getbytitle('${this.props.listName}')/items(${item.Id})`,
-          SPHttpClient.configurations.v1,
-          {
-            headers: {
-              'Accept': 'application/json;odata=nometadata',
-              'Content-type': 'application/json;odata=verbose',
-              'odata-version': '',
-              'IF-MATCH': etag,
-              'X-HTTP-Method': 'DELETE'
-            }
-          });
-      })
-      .then((response: SPHttpClientResponse): void => {
-        this.setState({
-          status: `Item with ID: ${latestItemId} successfully deleted`,
-          items: []
-        });
-      }, (error: any): void => {
-        this.setState({
-          status: `Error deleting item: ${error}`,
-          items: []
-        });
-      });
-  }
+interface IStatus {
+  type: MessageBarType;
+  text: string;
 }
+
+/** Replaces {0}, {1}… with the given values. */
+function format(template: string, ...values: (string | number)[]): string {
+  return template.replace(/\{(\d+)\}/g, (match: string, index: string) => {
+    const value: string | number | undefined = values[Number(index)];
+    return value === undefined ? match : String(value);
+  });
+}
+
+function errorText(error: unknown, listName: string): string {
+  if (error instanceof ListServiceError) {
+    if (error.status === 404) {
+      return format(strings.ErrorListNotFound, listName);
+    }
+    if (error.status === 401 || error.status === 403) {
+      return strings.ErrorAccessDenied;
+    }
+  }
+  const detail: string = error instanceof Error ? error.message : String(error);
+  return format(strings.ErrorGeneric, detail);
+}
+
+const columns: IColumn[] = [
+  { key: 'id', name: strings.ColumnId, fieldName: 'Id', minWidth: 40, maxWidth: 70 },
+  { key: 'title', name: strings.ColumnTitle, fieldName: 'Title', minWidth: 200, isMultiline: true }
+];
+
+const SpfxReactCrud: React.FC<ISpfxReactCrudProps> = (props) => {
+  const { listName, spHttpClient, siteUrl, theme } = props;
+
+  const service: ListService = React.useMemo(
+    () => new ListService(spHttpClient, siteUrl, listName),
+    [spHttpClient, siteUrl, listName]
+  );
+
+  const [items, setItems] = React.useState<IListItem[]>([]);
+  const [loading, setLoading] = React.useState<boolean>(true);
+  const [busy, setBusy] = React.useState<boolean>(false);
+  const [status, setStatus] = React.useState<IStatus | undefined>(undefined);
+  const [title, setTitle] = React.useState<string>('');
+  const [selected, setSelected] = React.useState<IListItem | undefined>(undefined);
+  const [confirmDelete, setConfirmDelete] = React.useState<boolean>(false);
+
+  const selection: Selection = React.useMemo(
+    () => new Selection({
+      onSelectionChanged: () => {
+        const item: IListItem | undefined = selection.getSelection()[0] as IListItem | undefined;
+        setSelected(item);
+        setTitle(item ? item.Title || '' : '');
+      }
+    }),
+    []
+  );
+
+  const loadItems = React.useCallback(async (): Promise<void> => {
+    setLoading(true);
+    try {
+      setItems(await service.getItems());
+    } catch (error) {
+      setItems([]);
+      setStatus({ type: MessageBarType.error, text: errorText(error, listName) });
+    } finally {
+      setLoading(false);
+    }
+  }, [service, listName]);
+
+  React.useEffect(() => {
+    setStatus(undefined);
+    loadItems().catch(() => { /* handled in loadItems */ });
+  }, [loadItems]);
+
+  /** Runs a write operation, shows the result and reloads the list. */
+  const run = async (operation: () => Promise<string>): Promise<void> => {
+    setBusy(true);
+    setStatus(undefined);
+    try {
+      const message: string = await operation();
+      selection.setAllSelected(false);
+      setTitle('');
+      setStatus({ type: MessageBarType.success, text: message });
+      await loadItems();
+    } catch (error) {
+      setStatus({ type: MessageBarType.error, text: errorText(error, listName) });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onCreate = (): Promise<void> => run(async () => {
+    const item: IListItem = await service.createItem(title.trim());
+    return format(strings.StatusCreated, item.Title, item.Id);
+  });
+
+  const onUpdate = (): Promise<void> => run(async () => {
+    const id: number = selected!.Id;
+    await service.updateItem(id, title.trim());
+    return format(strings.StatusUpdated, id);
+  });
+
+  const onDelete = (): Promise<void> => {
+    setConfirmDelete(false);
+    return run(async () => {
+      const id: number = selected!.Id;
+      await service.deleteItem(id);
+      return format(strings.StatusDeleted, id);
+    });
+  };
+
+  const hasTitle: boolean = title.trim().length > 0;
+
+  return (
+    <ThemeProvider theme={theme as PartialTheme | undefined} className={styles.spfxReactCrud}>
+      <Stack tokens={{ childrenGap: 12 }}>
+        <Text variant="xLarge" block>{format(strings.Heading, listName)}</Text>
+
+        {status && (
+          <MessageBar messageBarType={status.type} onDismiss={() => setStatus(undefined)} isMultiline>
+            {status.text}
+          </MessageBar>
+        )}
+
+        <Stack horizontal wrap verticalAlign="end" tokens={{ childrenGap: 8 }}>
+          <Stack.Item grow className={styles.titleField}>
+            <TextField
+              label={selected ? format(strings.TitleFieldEditLabel, selected.Id) : strings.TitleFieldNewLabel}
+              value={title}
+              onChange={(_, value) => setTitle(value || '')}
+              disabled={busy}
+            />
+          </Stack.Item>
+          {selected ? (
+            <>
+              <PrimaryButton text={strings.ButtonSave} iconProps={{ iconName: 'Save' }} onClick={onUpdate} disabled={busy || !hasTitle} />
+              <DefaultButton text={strings.ButtonDelete} iconProps={{ iconName: 'Delete' }} onClick={() => setConfirmDelete(true)} disabled={busy} />
+              <DefaultButton text={strings.ButtonCancel} onClick={() => selection.setAllSelected(false)} disabled={busy} />
+            </>
+          ) : (
+            <PrimaryButton text={strings.ButtonCreate} iconProps={{ iconName: 'Add' }} onClick={onCreate} disabled={busy || !hasTitle} />
+          )}
+          <DefaultButton text={strings.ButtonRefresh} iconProps={{ iconName: 'Refresh' }} onClick={loadItems} disabled={busy || loading} />
+        </Stack>
+
+        {loading ? (
+          <Spinner size={SpinnerSize.large} label={strings.Loading} />
+        ) : items.length === 0 ? (
+          <Text>{strings.EmptyList}</Text>
+        ) : (
+          <DetailsList
+            items={items}
+            columns={columns}
+            selection={selection}
+            selectionMode={SelectionMode.single}
+            selectionPreservedOnEmptyClick
+            layoutMode={DetailsListLayoutMode.justified}
+            getKey={(item: IListItem) => String(item.Id)}
+            setKey="items"
+          />
+        )}
+      </Stack>
+
+      <Dialog
+        hidden={!confirmDelete}
+        onDismiss={() => setConfirmDelete(false)}
+        dialogContentProps={{
+          type: DialogType.normal,
+          title: strings.DeleteDialogTitle,
+          subText: selected ? format(strings.DeleteDialogText, selected.Title, selected.Id) : ''
+        }}
+        modalProps={{ isBlocking: true }}
+      >
+        <DialogFooter>
+          <PrimaryButton text={strings.ButtonDelete} onClick={onDelete} />
+          <DefaultButton text={strings.ButtonCancel} onClick={() => setConfirmDelete(false)} />
+        </DialogFooter>
+      </Dialog>
+    </ThemeProvider>
+  );
+};
+
+export default SpfxReactCrud;
