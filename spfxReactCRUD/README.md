@@ -25,9 +25,21 @@ O nome da lista é configurado no painel de propriedades do web part (*Nome da l
 - Permissão de edição na lista e de edição de página no site
 - Para publicar: acesso ao App Catalog do tenant
 
+Os dados da lista são acessados com **PnPjs v4** (`@pnp/sp`).
+
 A toolchain é **Heft** (SPFx 1.22+). Não precisa de gulp nem de pacotes globais.
 
 ## Desenvolvimento
+
+O `config/serve.json` não guarda o endereço de nenhum tenant: ele usa o token `{tenantDomain}`, que o Heft troca pelo valor da variável de ambiente **`SPFX_SERVE_TENANT_DOMAIN`**. Defina uma vez na sua máquina (por exemplo no `~/.bashrc`):
+
+```bash
+# só o domínio: abre https://contoso.sharepoint.com/SitePages/Home.aspx
+export SPFX_SERVE_TENANT_DOMAIN=contoso.sharepoint.com
+
+# ou domínio + site, para abrir a página inicial de um site específico
+export SPFX_SERVE_TENANT_DOMAIN=contoso.sharepoint.com/sites/MeuSite
+```
 
 ```bash
 nvm use
@@ -35,11 +47,13 @@ npm install
 npm start          # heft start --clean, serve em https://localhost:4321
 ```
 
-O `npm start` abre a página definida em `config/serve.json` já com os parâmetros de debug. Para abrir à mão, use:
+O `npm start` abre essa página já com os parâmetros de debug. Para abrir outra página à mão, acrescente ao endereço dela:
 
 ```
-https://draddx.sharepoint.com/sites/SitedeComunicacao/SitePages/Home.aspx?debug=true&noredir=true&debugManifestsFile=https://localhost:4321/temp/build/manifests.js
+?debug=true&noredir=true&debugManifestsFile=https://localhost:4321/temp/build/manifests.js
 ```
+
+A configuração "SharePoint page (debug)" do `.vscode/launch.json` usa a mesma variável.
 
 Aceite "Carregar scripts de depuração", edite a página e adicione o web part **SPFx React CRUD**.
 
@@ -56,13 +70,30 @@ Gera `sharepoint/solution/spfx-react-crud.sppkg`. Suba esse arquivo no App Catal
 ## Estrutura
 
 ```
-src/webparts/spfxReactCrud/
-├── SpfxReactCrudWebPart.ts        # web part: propriedades, tema, render
-├── components/SpfxReactCrud.tsx   # UI (function component + Fluent UI)
-├── services/ListService.ts        # chamadas REST à lista
-├── models/IListItem.ts
-└── loc/                           # textos en-us e pt-br
+src/
+├── services/
+│   ├── base/base.service.ts       # BaseService: SPFI + web via getSP
+│   └── list.service.ts            # CRUD da lista (PnPjs)
+├── utils/
+│   ├── get-sp.ts                  # bootstrap único do PnPjs
+│   └── format.ts                  # "{0}" nas strings de loc/
+├── styles/_variables.scss         # tokens de estilo
+└── webparts/spfxReactCrud/
+    ├── SpfxReactCrudWebPart.ts    # propriedades, tema, monta o App
+    ├── App.tsx
+    ├── hooks/
+    │   ├── use-list-crud.ts       # itens, status e ações (usa o ListService)
+    │   └── use-item-selection.ts  # seleção da tabela
+    ├── components/
+    │   ├── index.tsx              # tela: compõe os filhos
+    │   ├── props.d.ts             # contrato WebPart ↔ App
+    │   ├── item-form/             # campo de título + botões
+    │   ├── items-table/           # DetailsList / carregando / vazio
+    │   └── delete-dialog/         # confirmação de exclusão
+    └── loc/                       # textos en-us e pt-br
 ```
+
+As regras de estrutura e código para o Claude Code estão no `CLAUDE.md` e em `.claude/` (na raiz do repositório).
 
 ## Histórico
 

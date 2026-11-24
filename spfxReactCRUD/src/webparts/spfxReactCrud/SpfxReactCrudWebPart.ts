@@ -9,8 +9,8 @@ import { BaseClientSideWebPart } from '@microsoft/sp-webpart-base';
 import type { IReadonlyTheme } from '@microsoft/sp-component-base';
 
 import * as strings from 'SpfxReactCrudWebPartStrings';
-import SpfxReactCrud from './components/SpfxReactCrud';
-import { ISpfxReactCrudProps } from './components/ISpfxReactCrudProps';
+import { App } from './App';
+import { IProps } from './components/props';
 
 export interface ISpfxReactCrudWebPartProps {
   listName: string;
@@ -22,12 +22,11 @@ export default class SpfxReactCrudWebPart extends BaseClientSideWebPart<ISpfxRea
   private _theme: IReadonlyTheme | undefined;
 
   public render(): void {
-    const element: React.ReactElement<ISpfxReactCrudProps> = React.createElement(
-      SpfxReactCrud,
+    const element: React.ReactElement<IProps> = React.createElement(
+      App,
       {
+        context: this.context,
         listName: this.properties.listName || 'Sample',
-        spHttpClient: this.context.spHttpClient,
-        siteUrl: this.context.pageContext.web.absoluteUrl,
         theme: this._theme
       }
     );
