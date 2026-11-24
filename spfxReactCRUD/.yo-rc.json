@@ -1,11 +1,21 @@
 {
   "@microsoft/generator-sharepoint": {
+    "whichFolder": "subdir",
+    "solutionName": "spfx-react-crud",
+    "useGulp": false,
+    "componentType": "webpart",
+    "template": "react",
+    "componentName": "SpfxReactCrud",
+    "plusBeta": false,
     "isCreatingSolution": true,
-    "environment": "spo",
-    "version": "1.7.1",
+    "nodeVersion": "22.17.0",
+    "sdksVersions": {},
+    "version": "1.24.2",
     "libraryName": "spfx-react-crud",
     "libraryId": "dc4ac0ca-3679-4d25-8c09-9bb0e5f8830c",
+    "environment": "spo",
     "packageManager": "npm",
-    "componentType": "webpart"
+    "solutionShortDescription": "spfx-react-crud description",
+    "skipFeatureDeployment": true
   }
 }

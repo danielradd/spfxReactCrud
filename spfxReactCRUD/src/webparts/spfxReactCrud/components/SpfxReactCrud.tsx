@@ -7,8 +7,8 @@ import { IListItem } from './IListItem';
 import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http';
 
 export default class SpfxReactCrud extends React.Component<ISpfxReactCrudProps, ISpfxReactCrudState> {
-  private listItemEntityTypeName: string = undefined;
-  constructor(props: ISpfxReactCrudProps, state: ISpfxReactCrudState) {
+  private listItemEntityTypeName: string | undefined = undefined;
+  constructor(props: ISpfxReactCrudProps) {
     super(props);
 
     this.state = {
@@ -20,7 +20,7 @@ export default class SpfxReactCrud extends React.Component<ISpfxReactCrudProps, 
   public render(): React.ReactElement<ISpfxReactCrudProps> {
     const items: JSX.Element[] = this.state.items.map((item: IListItem, i: number): JSX.Element => {
       return (
-        <li>{item.Title} ({item.Id}) </li>
+        <li key={item.Id}>{item.Title} ({item.Id}) </li>
       );
     });
 
@@ -159,8 +159,6 @@ export default class SpfxReactCrud extends React.Component<ISpfxReactCrudProps, 
         })
         .then((response: SPHttpClientResponse): Promise<{ value: { Id: number }[] }> => {
           return response.json();
-        }, (error: any): void => {
-          reject(error);
         })
         .then((response: { value: { Id: number }[] }): void => {
           if (response.value.length === 0) {
@@ -169,6 +167,9 @@ export default class SpfxReactCrud extends React.Component<ISpfxReactCrudProps, 
           else {
             resolve(response.value[0].Id);
           }
+        })
+        .catch((error: any): void => {
+          reject(error);
         });
     });
   }
@@ -178,9 +179,9 @@ export default class SpfxReactCrud extends React.Component<ISpfxReactCrudProps, 
       status: 'Loading latest items...',
       items: []
     });
-    let latestItemId: number = undefined;
-    let etag: string = undefined;
-    let listItemEntityTypeName: string = undefined;
+    let latestItemId: number | undefined = undefined;
+    let etag: string = '*';
+    let listItemEntityTypeName: string = '';
     this.getListItemEntityTypeName()
       .then((listItemType: string): Promise<number> => {
         listItemEntityTypeName = listItemType;
@@ -206,7 +207,7 @@ export default class SpfxReactCrud extends React.Component<ISpfxReactCrudProps, 
           });
       })
       .then((response: SPHttpClientResponse): Promise<IListItem> => {
-        etag = response.headers.get('ETag');
+        etag = response.headers.get('ETag') || '*';
         return response.json();
       })
       .then((item: IListItem): Promise<SPHttpClientResponse> => {
@@ -263,12 +264,13 @@ export default class SpfxReactCrud extends React.Component<ISpfxReactCrudProps, 
         })
         .then((response: SPHttpClientResponse): Promise<{ ListItemEntityTypeFullName: string }> => {
           return response.json();
-        }, (error: any): void => {
-          reject(error);
         })
         .then((response: { ListItemEntityTypeFullName: string }): void => {
           this.listItemEntityTypeName = response.ListItemEntityTypeFullName;
           resolve(this.listItemEntityTypeName);
+        })
+        .catch((error: any): void => {
+          reject(error);
         });
     });
   }
@@ -282,8 +284,8 @@ export default class SpfxReactCrud extends React.Component<ISpfxReactCrudProps, 
       status: 'Loading latest items...',
       items: []
     });
-    let latestItemId: number = undefined;
-    let etag: string = undefined;
+    let latestItemId: number | undefined = undefined;
+    let etag: string = '*';
     this.getLatestItemId()
       .then((itemId: number): Promise<SPHttpClientResponse> => {
         if (itemId === -1) {
@@ -305,7 +307,7 @@ export default class SpfxReactCrud extends React.Component<ISpfxReactCrudProps, 
           });
       })
       .then((response: SPHttpClientResponse): Promise<IListItem> => {
-        etag = response.headers.get('ETag');
+        etag = response.headers.get('ETag') || '*';
         return response.json();
       })
       .then((item: IListItem): Promise<SPHttpClientResponse> => {
