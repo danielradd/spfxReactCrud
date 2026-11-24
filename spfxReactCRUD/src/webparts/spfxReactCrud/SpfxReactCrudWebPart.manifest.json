@@ -18,11 +18,11 @@
   "preconfiguredEntries": [{
     "groupId": "5c03119e-3074-46fd-976b-c60198311f70", // Advanced
     "group": { "default": "Advanced" },
-    "title": { "default": "SpfxReactCrud" },
-    "description": { "default": "SpfxReactCrud description" },
+    "title": { "default": "SPFx React CRUD" },
+    "description": { "default": "Cria, lê, atualiza e exclui itens de uma lista do SharePoint" },
     "officeFabricIconFontName": "Page",
     "properties": {
-      "description": "SpfxReactCrud"
+      "listName": "Sample"
     }
   }]
 }

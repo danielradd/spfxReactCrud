@@ -1,7 +1,8 @@
 declare interface ISpfxReactCrudWebPartStrings {
   PropertyPaneDescription: string;
   BasicGroupName: string;
-  DescriptionFieldLabel: string;
+  ListNameFieldLabel: string;
+  ListNameFieldDescription: string;
 }
 
 declare module 'SpfxReactCrudWebPartStrings' {

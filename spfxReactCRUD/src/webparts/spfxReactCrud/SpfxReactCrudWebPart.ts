@@ -12,7 +12,7 @@ import SpfxReactCrud from './components/SpfxReactCrud';
 import { ISpfxReactCrudProps } from './components/ISpfxReactCrudProps';
 
 export interface ISpfxReactCrudWebPartProps {
-  description: string;
+  listName: string;
 }
 
 export default class SpfxReactCrudWebPart extends BaseClientSideWebPart<ISpfxReactCrudWebPartProps> {
@@ -23,7 +23,7 @@ export default class SpfxReactCrudWebPart extends BaseClientSideWebPart<ISpfxRea
     const element: React.ReactElement<ISpfxReactCrudProps> = React.createElement(
       SpfxReactCrud,
       {
-        listName: "Projects",
+        listName: this.properties.listName || 'Sample',
         spHttpClient: this.context.spHttpClient,
         siteUrl: this.context.pageContext.web.absoluteUrl
       }
@@ -56,8 +56,9 @@ export default class SpfxReactCrudWebPart extends BaseClientSideWebPart<ISpfxRea
             {
               groupName: strings.BasicGroupName,
               groupFields: [
-                PropertyPaneTextField('description', {
-                  label: strings.DescriptionFieldLabel
+                PropertyPaneTextField('listName', {
+                  label: strings.ListNameFieldLabel,
+                  description: strings.ListNameFieldDescription
                 })
               ]
             }
