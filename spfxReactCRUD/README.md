@@ -1,77 +1,72 @@
 # spfx-react-crud
 
-## Summary
+Web part do SharePoint Framework que cria, lê, atualiza e exclui itens de uma lista do SharePoint usando React, Fluent UI v8 e `SPHttpClient` (REST).
 
-Short summary on functionality and used technologies.
+![version](https://img.shields.io/badge/SPFx-1.24.2-green.svg) ![node](https://img.shields.io/badge/Node-22_LTS-green.svg)
 
-[picture of the solution in action, if possible]
+## O que faz
 
-## Used SharePoint Framework Version
+- Mostra os itens da lista (ID e Título) num `DetailsList`, os mais recentes primeiro
+- **Criar:** digite um título e clique em *Adicionar*
+- **Editar:** selecione um item, altere o título e clique em *Salvar*
+- **Excluir:** selecione um item e clique em *Excluir* (pede confirmação; o item vai para a lixeira)
+- Mostra mensagens claras quando a lista não existe ou o usuário não tem permissão
+- Segue o tema do site (inclusive seções com fundo escuro) e tem textos em pt-br e en-us
 
-![version](https://img.shields.io/badge/version-1.24.2-green.svg)
+## Lista esperada
 
-## Applies to
+Qualquer lista do site que tenha a coluna padrão **Título** (`Title`). Não é preciso criar outras colunas.
 
-- [SharePoint Framework](https://aka.ms/spfx)
-- [Microsoft 365 tenant](https://docs.microsoft.com/sharepoint/dev/spfx/set-up-your-developer-tenant)
+O nome da lista é configurado no painel de propriedades do web part (*Nome da lista*). O padrão é **`Sample`**.
 
-> Get your own free development tenant by subscribing to [Microsoft 365 developer program](http://aka.ms/o365devprogram)
+## Pré-requisitos
 
-## Prerequisites
+- Node.js **22 LTS** (`>=22.14`). Com nvm: `nvm use` (o projeto tem `.nvmrc`)
+- Permissão de edição na lista e de edição de página no site
+- Para publicar: acesso ao App Catalog do tenant
 
-> Any special pre-requisites?
+A toolchain é **Heft** (SPFx 1.22+). Não precisa de gulp nem de pacotes globais.
 
-## Solution
+## Desenvolvimento
 
-| Solution    | Author(s)                                               |
-| ----------- | ------------------------------------------------------- |
-| folder name | Author details (name, company, twitter alias with link) |
+```bash
+nvm use
+npm install
+npm start          # heft start --clean, serve em https://localhost:4321
+```
 
-## Version history
+O `npm start` abre a página definida em `config/serve.json` já com os parâmetros de debug. Para abrir à mão, use:
 
-| Version | Date             | Comments        |
-| ------- | ---------------- | --------------- |
-| 1.1     | March 10, 2021   | Update comment  |
-| 1.0     | January 29, 2021 | Initial release |
+```
+https://draddx.sharepoint.com/sites/SitedeComunicacao/SitePages/Home.aspx?debug=true&noredir=true&debugManifestsFile=https://localhost:4321/temp/build/manifests.js
+```
 
-## Disclaimer
+Aceite "Carregar scripts de depuração", edite a página e adicione o web part **SPFx React CRUD**.
 
-**THIS CODE IS PROVIDED _AS IS_ WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.**
+> Na primeira vez, o navegador pode recusar o certificado de `localhost:4321`. Abra `https://localhost:4321/temp/build/manifests.js` e aceite o certificado.
 
----
+## Build e deploy
 
-## Minimal Path to Awesome
+```bash
+npm run build      # build de produção + pacote
+```
 
-- Clone this repository
-- Ensure that you are at the solution folder
-- in the command-line run:
-  - `npm install -g @rushstack/heft`
-  - `npm install`
-  - `heft start`
+Gera `sharepoint/solution/spfx-react-crud.sppkg`. Suba esse arquivo no App Catalog do tenant e, no site, adicione o app (ou atualize, se a versão anterior já estiver instalada; o ID da solução é o mesmo).
 
-> Include any additional steps as needed.
+## Estrutura
 
-Other build commands can be listed using `heft --help`.
+```
+src/webparts/spfxReactCrud/
+├── SpfxReactCrudWebPart.ts        # web part: propriedades, tema, render
+├── components/SpfxReactCrud.tsx   # UI (function component + Fluent UI)
+├── services/ListService.ts        # chamadas REST à lista
+├── models/IListItem.ts
+└── loc/                           # textos en-us e pt-br
+```
 
-## Features
+## Histórico
 
-Description of the extension that expands upon high-level summary above.
-
-This extension illustrates the following concepts:
-
-- topic 1
-- topic 2
-- topic 3
-
-> Notice that better pictures and documentation will increase the sample usage and the value you are providing for others. Thanks for your submissions advance.
-
-> Share your web part with others through Microsoft 365 Patterns and Practices program to get visibility and exposure. More details on the community, open-source projects and other activities from http://aka.ms/m365pnp.
-
-## References
-
-- [Getting started with SharePoint Framework](https://docs.microsoft.com/sharepoint/dev/spfx/set-up-your-developer-tenant)
-- [Building for Microsoft teams](https://docs.microsoft.com/sharepoint/dev/spfx/build-for-teams-overview)
-- [Use Microsoft Graph in your solution](https://docs.microsoft.com/sharepoint/dev/spfx/web-parts/get-started/using-microsoft-graph-apis)
-- [Publish SharePoint Framework applications to the Marketplace](https://docs.microsoft.com/sharepoint/dev/spfx/publish-to-marketplace-overview)
-- [Microsoft 365 Patterns and Practices](https://aka.ms/m365pnp) - Guidance, tooling, samples and open-source controls for your Microsoft 365 development
-- [Heft Documentation](https://heft.rushstack.io/)
+| Versão  | Data       | Comentário |
+| ------- | ---------- | ---------- |
+| 2.0.0.0 | 23/11/2026 | Upgrade SPFx 1.7.1 → 1.24.2 (Node 22, Heft, React 18), lista configurável, UI com Fluent UI |
+| 1.0.0.0 | 2019       | Versão inicial (SPFx 1.7.1) |
